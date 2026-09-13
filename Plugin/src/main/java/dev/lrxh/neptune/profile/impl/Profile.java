@@ -19,6 +19,7 @@ import dev.lrxh.neptune.game.arena.procedure.ArenaProcedure;
 import dev.lrxh.neptune.game.duel.DuelRequest;
 import dev.lrxh.neptune.game.kit.Kit;
 import dev.lrxh.neptune.game.kit.KitService;
+import dev.lrxh.neptune.game.kit.editor.EditorSession;
 import dev.lrxh.neptune.game.kit.procedure.KitProcedure;
 import dev.lrxh.neptune.game.match.Match;
 import dev.lrxh.neptune.profile.data.*;
@@ -53,6 +54,7 @@ public class Profile implements IProfile {
     private Visibility visibility;
     private ArenaProcedure arenaProcedure;
     private KitProcedure kitProcedure;
+    private EditorSession editorSession;
     private Player partyInviteTarget;
     private boolean fake;
 
