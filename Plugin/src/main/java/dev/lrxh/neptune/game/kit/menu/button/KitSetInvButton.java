@@ -23,11 +23,11 @@ public class KitSetInvButton extends Button {
     @Override
     public void onClick(ClickType type, Player player) {
         Profile profile = API.getProfile(player);
-        profile.getKitProcedure().setType(KitProcedureType.SET_INV);
+        profile.getKitProcedure().setType(KitProcedureType.ADMIN_SET_INV);
         profile.getKitProcedure().setKit(kit);
         player.closeInventory();
         player.getInventory().setContents(kit.getItems().toArray(new ItemStack[0]));
-        player.sendMessage(CC.info("Once you're done changing around, type &aDone"));
+        player.sendMessage(CC.info("Once you're done changing around, type &aDone&7, type &cCancel &7to abort."));
     }
 
     @Override
