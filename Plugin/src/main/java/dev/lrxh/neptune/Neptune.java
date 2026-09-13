@@ -51,6 +51,8 @@ import dev.lrxh.neptune.game.kit.KitService;
 import dev.lrxh.neptune.game.kit.command.KitEditorCommand;
 import dev.lrxh.neptune.game.kit.command.KitProvider;
 import dev.lrxh.neptune.game.kit.command.StatsCommand;
+import dev.lrxh.neptune.game.kit.editor.KitEditorSessionListener;
+import dev.lrxh.neptune.game.kit.editor.command.RefillCommand;
 import dev.lrxh.neptune.game.kit.listener.KitEditorChatListener;
 import dev.lrxh.neptune.game.kit.listener.KitEditorListener;
 import dev.lrxh.neptune.game.match.MatchService;
@@ -177,6 +179,7 @@ public final class Neptune extends JavaPlugin {
                         new ArenaEditorChatListener(),
                         new KitEditorChatListener(),
                         new KitEditorListener(),
+                        new KitEditorSessionListener(),
                         new CustomKitListener(),
                         new PartyChatListener())
                 .forEach(listener -> getServer().getPluginManager().registerEvents(listener, this));
@@ -227,6 +230,7 @@ public final class Neptune extends JavaPlugin {
         drink.bind(Kit.class).annotatedWith(Text.class).toProvider(new KitProvider());
 
         drink.register(new KitEditorCommand(), "kiteditor").setDefaultCommandIsHelp(true);
+        drink.register(new RefillCommand(), "refill").setDefaultCommandIsHelp(true);
         drink.register(new StatsCommand(), "stats").setDefaultCommandIsHelp(true);
         drink.register(new PartyCommand(), "party", "p");
         drink.register(new PartyChatCommand(), "pc", "partychat");
