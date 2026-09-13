@@ -3,6 +3,7 @@ package dev.lrxh.neptune.game.kit.listener;
 import dev.lrxh.neptune.API;
 import dev.lrxh.neptune.configs.impl.MessagesLocale;
 import dev.lrxh.neptune.game.kit.Kit;
+import dev.lrxh.neptune.game.kit.editor.KitEditorSessionMenu;
 import dev.lrxh.neptune.profile.data.ProfileState;
 import dev.lrxh.neptune.profile.impl.Profile;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -13,6 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.CraftingInventory;
 
 import java.util.Arrays;
@@ -70,6 +72,17 @@ public class KitEditorListener implements Listener {
             if (event.getInventory() instanceof CraftingInventory) {
                 event.setCancelled(true);
             }
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        Profile profile = API.getProfile(player);
+        if (profile == null) return;
+
+        if (profile.getEditorSession() != null) {
+            new KitEditorSessionMenu(profile.getEditorSession().getKit()).saveAndClose(player);
         }
     }
 }
