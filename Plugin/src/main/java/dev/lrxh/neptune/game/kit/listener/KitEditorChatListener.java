@@ -33,9 +33,14 @@ public class KitEditorChatListener implements Listener {
 
         if (input.equalsIgnoreCase("Cancel") && !profile.getKitProcedure().getType().equals(KitProcedureType.NONE)) {
             event.setCancelled(true);
-            player.sendMessage(CC.success("Canceled Procedure"));
             profile.getKitProcedure().setType(KitProcedureType.NONE);
+            Kit cancelledKit = profile.getKitProcedure().getKit();
             profile.getKitProcedure().setKit(null);
+            player.sendMessage(CC.success("Canceled procedure" + (cancelledKit != null ? " for " + cancelledKit.getDisplayName() : "")));
+            Bukkit.getScheduler().runTask(Neptune.get(), () -> {
+                PlayerUtil.reset(player);
+                HotbarService.get().giveItems(player);
+            });
             return;
         }
 
@@ -85,7 +90,49 @@ public class KitEditorChatListener implements Listener {
                     return;
                 }
             }
+            case ADMIN_SET_INV -> {
+                if (input.equalsIgnoreCase("Cancel")) return;
+                if (!input.equalsIgnoreCase("Done")) return;
+                event.setCancelled(true);
 
+                Kit kit = profile.getKitProcedure().getKit();
+                profile.getKitProcedure().setType(KitProcedureType.NONE);
+                kit.setItems(Arrays.stream(player.getInventory().getContents()).toList());
+
+                List<PotionEffect> potionEffects = new ArrayList<>();
+                for (PotionEffect effect : player.getActivePotionEffects()) {
+                    int currentDuration = effect.getDuration();
+                    int maxDuration = PlayerUtil.getMaxDuration(player, effect.getType());
+                    potionEffects.add(new PotionEffect(effect.getType(), Math.min(currentDuration, maxDuration), effect.getAmplifier(), effect.isAmbient(), effect.hasParticles(), effect.hasIcon()));
+                }
+                kit.setPotionEffects(potionEffects);
+
+                for (Profile p : ProfileService.get().profiles.values()) {
+                    p.getGameData().get(kit).setKitLoadout(kit.getItems());
+                }
+
+                player.sendMessage(CC.success("Set new kit inventory for " + kit.getDisplayName() + ". Use &b/neptune resetkitloadout " + kit.getName() + " &ato reset custom kit loadouts for all players."));
+                new KitManagementMenu(kit).open(player);
+                Bukkit.getScheduler().runTask(Neptune.get(), () -> {
+                    PlayerUtil.reset(player);
+                    HotbarService.get().giveItems(player);
+                });
+            }
+            case ADMIN_SET_ICON -> {
+                if (input.equalsIgnoreCase("Cancel")) return;
+                if (!input.equalsIgnoreCase("Done")) return;
+                event.setCancelled(true);
+                Material material = player.getInventory().getItemInMainHand().getType();
+                if (!material.equals(Material.AIR)) {
+                    profile.getKitProcedure().setType(KitProcedureType.NONE);
+                    profile.getKitProcedure().getKit().setIcon(player.getInventory().getItemInMainHand().clone());
+                    player.sendMessage(CC.success("Set new icon for " + profile.getKitProcedure().getKit().getDisplayName()));
+                    new KitManagementMenu(profile.getKitProcedure().getKit()).open(player);
+                } else {
+                    player.sendMessage(CC.error("You must be holding an item to set the icon, please try again"));
+                    return;
+                }
+            }
         }
         profile.getKitProcedure().setKit(null);
         KitService.get().save();
