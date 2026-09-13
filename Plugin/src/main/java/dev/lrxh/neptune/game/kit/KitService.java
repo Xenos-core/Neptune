@@ -3,13 +3,17 @@ package dev.lrxh.neptune.game.kit;
 import dev.lrxh.api.arena.IArena;
 import dev.lrxh.api.kit.IKit;
 import dev.lrxh.api.kit.IKitService;
+import dev.lrxh.neptune.API;
 import dev.lrxh.neptune.configs.ConfigService;
 import dev.lrxh.neptune.game.arena.Arena;
 import dev.lrxh.neptune.game.arena.ArenaService;
+import dev.lrxh.neptune.game.kit.editor.EditorSession;
 import dev.lrxh.neptune.game.kit.impl.KitRule;
 import dev.lrxh.neptune.providers.manager.IService;
+import dev.lrxh.neptune.profile.impl.Profile;
 import dev.lrxh.neptune.utils.ConfigFile;
 import lombok.Getter;
+import org.bukkit.entity.Player;
 
 import java.util.*;
 
@@ -110,5 +114,20 @@ public class KitService extends IService implements IKitService {
                 kit.getPotionEffects(),
                 kit.getDamageMultiplier()
         );
+    }
+
+    @Override
+    public boolean isInEditor(Player player) {
+        Profile profile = API.getProfile(player);
+        return profile != null && profile.getEditorSession() != null;
+    }
+
+    @Override
+    public Optional<IKit> getEditorSessionKit(Player player) {
+        Profile profile = API.getProfile(player);
+        if (profile == null || profile.getEditorSession() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(profile.getEditorSession().getKit());
     }
 }
