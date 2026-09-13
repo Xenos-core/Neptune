@@ -49,6 +49,7 @@ public class Kit implements IKit, ConfigData {
     private List<PotionEffect> potionEffects;
     private double damageMultiplier;
     private int rounds = 1;
+    private List<ItemStack> refillItems = new ArrayList<>();
 
     public Kit(String name, String displayName, List<ItemStack> items, HashSet<Arena> arenas, ItemStack icon,
                HashMap<KitRule, Boolean> rules, int slot, double health, int kitEditorSlot, int leaderboardSlot,
@@ -150,9 +151,12 @@ public class Kit implements IKit, ConfigData {
 
         int rounds = clampRounds(s.getInt("rounds", defaultRounds(s.getBoolean("bestOfThree", false))));
 
+        List<ItemStack> refillItems = ItemUtils.deserialize(s.getString("refill-items", ""));
+
         Kit kit = new Kit(name, s.getString("displayName", name), items, arenas, icon, rules,
                 slot, health, kitEditorSlot, leaderboardSlot, potionEffects, damageMultiplier);
         kit.setRounds(rounds);
+        kit.setRefillItems(refillItems);
         return kit;
     }
 
@@ -228,6 +232,7 @@ public class Kit implements IKit, ConfigData {
         s.set("leaderboard-slot", leaderboardSlot);
         s.set("damage-multiplier", damageMultiplier);
         s.set("rounds", rounds);
+        s.set("refill-items", ItemUtils.serialize(refillItems));
         s.set("bestOfThree", null);
         for (Map.Entry<KitRule, Boolean> e : rules.entrySet()) {
             s.set(e.getKey().getSaveName(), e.getValue());
