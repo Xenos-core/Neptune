@@ -5,6 +5,8 @@ import com.jonahseguin.drink.annotation.Sender;
 import dev.lrxh.neptune.API;
 import dev.lrxh.neptune.configs.impl.MessagesLocale;
 import dev.lrxh.neptune.game.kit.Kit;
+import dev.lrxh.neptune.game.kit.editor.KitEditorSessionMenu;
+import dev.lrxh.neptune.utils.CC;
 import dev.lrxh.neptune.game.kit.menu.editor.KitEditorMenu;
 import dev.lrxh.neptune.game.kit.menu.editor.button.KitEditorSelectButton;
 import dev.lrxh.neptune.profile.data.ProfileState;
@@ -33,7 +35,11 @@ public class KitEditorCommand {
         if (player == null) return;
         Profile profile = API.getProfile(player);
         if (profile.hasState(ProfileState.IN_LOBBY, ProfileState.IN_PARTY)) {
-            new KitEditorSelectButton(0, kit).onClick(ClickType.LEFT, player);
+            if (profile.getEditorSession() != null) {
+                player.sendMessage(CC.info("You are already editing a kit"));
+                return;
+            }
+            new KitEditorSessionMenu(kit).open(player);
         }
     }
 
