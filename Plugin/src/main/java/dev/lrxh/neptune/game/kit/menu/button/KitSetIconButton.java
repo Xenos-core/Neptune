@@ -23,11 +23,10 @@ public class KitSetIconButton extends Button {
     @Override
     public void onClick(ClickType type, Player player) {
         Profile profile = API.getProfile(player);
-        profile.getKitProcedure().setType(KitProcedureType.SET_ICON);
+        profile.getKitProcedure().setType(KitProcedureType.ADMIN_SET_ICON);
         profile.getKitProcedure().setKit(kit);
         player.closeInventory();
-        player.sendMessage(CC.info("Hold the the item in your press and type &aDone"));
-
+        player.sendMessage(CC.info("Hold the item in your hand and type &aDone&7, type &cCancel &7to abort."));
     }
 
     @Override
