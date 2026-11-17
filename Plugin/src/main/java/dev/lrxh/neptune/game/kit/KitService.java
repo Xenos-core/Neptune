@@ -27,6 +27,11 @@ public class KitService extends IService implements IKitService {
     @Override
     public void load() {
         loadAll("kits", kits, Kit::read);
+
+        if (kits.isEmpty()) {
+            kits.add(DefaultKits.vanilla());
+            save();
+        }
     }
 
     public boolean add(Kit kit) {
