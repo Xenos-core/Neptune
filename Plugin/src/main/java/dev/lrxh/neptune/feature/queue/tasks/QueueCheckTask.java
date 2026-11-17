@@ -79,6 +79,9 @@ public class QueueCheckTask extends NeptuneRunnable {
             Player player1 = profile1.getPlayer();
             Player player2 = profile2.getPlayer();
             if (player1 == null || player2 == null) {
+                // don't drop the player who is still online
+                if (player1 != null) QueueService.get().add(queueEntry1, false);
+                if (player2 != null) QueueService.get().add(queueEntry2, false);
                 continue;
             }
 
