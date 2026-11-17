@@ -94,7 +94,7 @@ public class MainCommand {
         DatabaseService.get().getDatabase().resetAllKitLoadouts(kit.getName());
         for (Player p : Bukkit.getOnlinePlayers()) {
             Profile profile = API.getProfile(p);
-            profile.getGameData().get(kit).setKitLoadout(kit.getItems());
+            profile.getGameData().get(kit).resetLoadouts(kit.getItems());
         }
         player.sendMessage(CC.color("&aAll users' kit loadouts have been reset."));
     }

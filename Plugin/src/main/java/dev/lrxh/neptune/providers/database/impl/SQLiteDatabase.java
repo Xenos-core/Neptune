@@ -131,7 +131,8 @@ public class SQLiteDatabase implements IDatabase {
 
     @Override
     public CompletableFuture<Void> resetAllKitLoadouts(String kitName) {
-        String sql = "UPDATE playerData SET data = json_set(data, '$.kitData.\""
+        String sql = "UPDATE playerData SET data = json_set(json_remove(data, '$.kitData.\""
+                + kitName + "\".loadouts', '$.kitData.\"" + kitName + "\".selectedLoadout'), '$.kitData.\""
                 + kitName + "\".kit', null) WHERE json_extract(data, '$.kitData.\""
                 + kitName + "\"') IS NOT NULL";
         return executeUpdate(sql).thenApply(ignored -> null);

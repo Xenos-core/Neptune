@@ -37,6 +37,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
 import java.util.*;
@@ -111,10 +112,21 @@ public class Profile implements IProfile {
                         profileKitData.setElo(kitDocument.getInteger("ELO", SettingsLocale.STARTING_ELO.getInt()));
                         profileKitData.setDivision(DivisionService.get().getDivisionByElo(profileKitData.getElo()));
                         profileKitData.setBestStreak(kitDocument.getInteger("WIN_STREAK_BEST", 0));
-                        profileKitData.setKitLoadout(
+                        profileKitData.setLoadout(0,
                                 Objects.equals(kitDocument.getString("kit"), "")
                                         ? kit.getItems()
                                         : ItemUtils.deserialize(kitDocument.getString("kit")));
+
+                        DataDocument extraLoadouts = kitDocument.getDataDocument("loadouts");
+                        if (extraLoadouts != null) {
+                            for (int i = 1; i < KitData.LOADOUT_SLOTS; i++) {
+                                String serialized = extraLoadouts.getString(String.valueOf(i + 1), "");
+                                if (!serialized.isEmpty()) {
+                                    profileKitData.setLoadout(i, ItemUtils.deserialize(serialized));
+                                }
+                            }
+                        }
+                        profileKitData.setSelectedLoadout(kitDocument.getInteger("selectedLoadout", 0));
 
                         DataDocument customPersistentData = kitDocument.getDataDocument("customPersistentData");
                         if (customPersistentData != null) {
@@ -177,11 +189,17 @@ public class Profile implements IProfile {
                 kitStatisticsDocument.put("DEATHS", entry.getDeaths());
                 kitStatisticsDocument.put("ELO", entry.getElo());
                 kitStatisticsDocument.put("WIN_STREAK_BEST", entry.getBestStreak());
-                kitStatisticsDocument.put(
-                        "kit",
-                        (entry.getKitLoadout() == null || entry.getKitLoadout().isEmpty())
-                                ? ""
-                                : ItemUtils.serialize(entry.getKitLoadout()));
+                // slot 1 stays under "kit" so older data still loads
+                List<ItemStack> firstLoadout = entry.getLoadout(0);
+                kitStatisticsDocument.put("kit", firstLoadout.isEmpty() ? "" : ItemUtils.serialize(firstLoadout));
+
+                DataDocument extraLoadouts = new DataDocument();
+                for (int i = 1; i < KitData.LOADOUT_SLOTS; i++) {
+                    List<ItemStack> loadout = entry.getLoadout(i);
+                    extraLoadouts.put(String.valueOf(i + 1), loadout.isEmpty() ? "" : ItemUtils.serialize(loadout));
+                }
+                kitStatisticsDocument.put("loadouts", extraLoadouts);
+                kitStatisticsDocument.put("selectedLoadout", entry.getSelectedLoadout());
 
                 entry.updateDivision();
 

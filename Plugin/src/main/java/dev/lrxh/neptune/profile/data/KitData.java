@@ -32,11 +32,50 @@ public class KitData implements IKitData {
     private int losses = 0;
     private int bestStreak = 0;
     private int currentStreak = 0;
-    private List<ItemStack> kitLoadout = new ArrayList<>();
+    public static final int LOADOUT_SLOTS = 6;
+
+    // one loadout per kit editor slot, the selected one is used in matches
+    private List<List<ItemStack>> loadouts = emptyLoadouts();
+    private int selectedLoadout = 0;
     private Division division = DivisionService.get().getDivisionByElo(SettingsLocale.STARTING_ELO.getInt());
     private int elo = SettingsLocale.STARTING_ELO.getInt();
     private HashMap<String, Object> customData = new HashMap<>();
     private HashMap<String, Object> persistentData = new HashMap<>();
+
+    private static List<List<ItemStack>> emptyLoadouts() {
+        List<List<ItemStack>> list = new ArrayList<>();
+        for (int i = 0; i < LOADOUT_SLOTS; i++) list.add(new ArrayList<>());
+        return list;
+    }
+
+    public List<ItemStack> getKitLoadout() {
+        return getLoadout(selectedLoadout);
+    }
+
+    public void setKitLoadout(List<ItemStack> loadout) {
+        setLoadout(selectedLoadout, loadout);
+    }
+
+    public List<ItemStack> getLoadout(int index) {
+        if (index < 0 || index >= LOADOUT_SLOTS) return new ArrayList<>();
+        return loadouts.get(index);
+    }
+
+    public void setLoadout(int index, List<ItemStack> loadout) {
+        if (index < 0 || index >= LOADOUT_SLOTS) return;
+        loadouts.set(index, loadout == null ? new ArrayList<>() : new ArrayList<>(loadout));
+    }
+
+    public void setSelectedLoadout(int index) {
+        if (index < 0 || index >= LOADOUT_SLOTS) return;
+        this.selectedLoadout = index;
+    }
+
+    public void resetLoadouts(List<ItemStack> defaultItems) {
+        loadouts = emptyLoadouts();
+        loadouts.set(0, new ArrayList<>(defaultItems));
+        selectedLoadout = 0;
+    }
 
     public double getKdr() {
         if (deaths == 0) return kills;
