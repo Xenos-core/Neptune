@@ -267,18 +267,17 @@ public class SoloFightMatch extends Match implements ISoloFightMatch {
             participant.getLastAttacker().playSound(SoundsLocale.getSound(SoundsLocale.PLAYER_KILL));
         }
 
-        this.setEnded(true);
-
         participant.playKillEffect();
         PlayerUtil.doVelocityChange(participant.getPlayerUUID());
 
-        if (!participant.isDisconnected() && !participant.isLeft() && !isEnded()) {
+        if (!participant.isDisconnected() && !participant.isLeft()) {
             Participant otherParticipant = participantA.equals(participant) ? participantB : participantA;
             if (otherParticipant.getPlayer() != null) {
                 addSpectator(participant.getPlayer(), otherParticipant.getPlayer(), false, false);
             }
         }
 
+        this.setEnded(true);
         end(participant);
     }
 
