@@ -33,6 +33,7 @@ public class GameData implements IGameData {
     private ArrayList<MatchHistory> matchHistories;
     private Gson gson;
     private Kit kitEditor;
+    private int kitEditorLoadout;
     private Party party;
     private boolean partyChatEnabled;
     private GlobalStats globalStats;

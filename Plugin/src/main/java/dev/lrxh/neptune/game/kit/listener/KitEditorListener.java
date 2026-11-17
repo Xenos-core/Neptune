@@ -1,11 +1,13 @@
 package dev.lrxh.neptune.game.kit.listener;
 
 import dev.lrxh.neptune.API;
-import dev.lrxh.neptune.configs.impl.MessagesLocale;
-import dev.lrxh.neptune.game.kit.Kit;
+import dev.lrxh.neptune.Neptune;
+import dev.lrxh.neptune.game.kit.menu.editor.KitEditingMenu;
+import dev.lrxh.neptune.game.kit.menu.editor.KitEditorSession;
 import dev.lrxh.neptune.profile.data.ProfileState;
 import dev.lrxh.neptune.profile.impl.Profile;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import dev.lrxh.neptune.utils.menu.MenuService;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,7 +17,6 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.CraftingInventory;
 
-import java.util.Arrays;
 
 public class KitEditorListener implements Listener {
 
@@ -25,24 +26,24 @@ public class KitEditorListener implements Listener {
         Profile profile = API.getProfile(player);
         if (profile == null)
             return;
-        if (profile.hasState(ProfileState.IN_KIT_EDITOR)) {
-            if (event.getView().getCursor().getType() != Material.AIR) {
-                event.getPlayer().getInventory().addItem(event.getView().getCursor());
-                event.getView().setCursor(null);
-            }
+        if (!profile.hasState(ProfileState.IN_KIT_EDITOR)) return;
 
-            Kit kit = profile.getGameData().getKitEditor();
-            profile.getGameData().get(kit)
-                    .setKitLoadout(Arrays.asList(player.getInventory().getContents()));
-
-            MessagesLocale.KIT_EDITOR_STOP.send(player.getUniqueId(), Placeholder.parsed("kit", kit.getDisplayName()));
-
-            if (profile.getGameData().getParty() == null) {
-                profile.setState(ProfileState.IN_LOBBY);
-            } else {
-                profile.setState(ProfileState.IN_PARTY);
-            }
+        if (event.getView().getCursor().getType() != Material.AIR) {
+            event.getPlayer().getInventory().addItem(event.getView().getCursor());
+            event.getView().setCursor(null);
         }
+
+        if (event.getReason() == InventoryCloseEvent.Reason.DISCONNECT) {
+            KitEditorSession.finish(player, profile);
+            return;
+        }
+
+        // moving between the editor menus closes the old one first, only save if no editor menu got opened
+        Bukkit.getScheduler().runTask(Neptune.get(), () -> {
+            if (!player.isOnline() || !profile.hasState(ProfileState.IN_KIT_EDITOR)) return;
+            if (MenuService.get().get(player) instanceof KitEditingMenu) return;
+            KitEditorSession.finish(player, profile);
+        });
     }
 
     @EventHandler
