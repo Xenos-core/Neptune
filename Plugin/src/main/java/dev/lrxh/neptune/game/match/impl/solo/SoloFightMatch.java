@@ -59,13 +59,12 @@ public class SoloFightMatch extends Match implements ISoloFightMatch {
 
     @Override
     public void win(Participant winner) {
+        if (isEnded()) return;
+        setEnded(true);
+
+        // go through end() so parkour/dropper wins get titles, elo and history too
         Participant loser = participantA == winner ? participantB : participantA;
-        setState(MatchState.ENDING);
-        loser.setLoser(true);
-
-        removePlaying();
-
-        new MatchEndRunnable(this).start(0L, 20L);
+        end(loser);
     }
 
     @Override
