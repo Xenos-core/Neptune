@@ -125,7 +125,6 @@ public class TeamFightMatch extends Match implements ITeamFightMatch {
         participant.setDead(true);
 
         MatchTeam team = getParticipantTeam(participant);
-        team.deadParticipants().add(participant);
         if (!participant.isDisconnected() && !participant.isLeft()) {
             if (getKit().is(KitRule.BED_WARS)) {
                 if (!participant.isBedBroken()) {
@@ -141,6 +140,11 @@ public class TeamFightMatch extends Match implements ITeamFightMatch {
             }
 
             sendDeathMessage(participant);
+        }
+
+        // only count them once they're actually out, bedwars respawns shouldn't add up
+        if (!team.deadParticipants().contains(participant)) {
+            team.deadParticipants().add(participant);
         }
 
         boolean allOut = team.participants().stream()
