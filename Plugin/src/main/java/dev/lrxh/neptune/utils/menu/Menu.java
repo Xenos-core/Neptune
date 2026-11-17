@@ -79,6 +79,13 @@ public abstract class Menu {
 
     public abstract List<Button> getButtons(Player player);
 
+    /**
+     * Lets the player move items around in their own inventory while this menu is open.
+     */
+    public boolean isPlayerInventoryEditable() {
+        return false;
+    }
+
     public Component getTitle(Player player) {
         return Component.empty();
     }

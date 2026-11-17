@@ -6,8 +6,10 @@ import dev.lrxh.neptune.configs.impl.SoundsLocale;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 public class MenuListener implements Listener {
@@ -38,7 +40,27 @@ public class MenuListener implements Listener {
                 }
             }
         } else {
-            event.setCancelled(true);
+            // shift clicks and double clicks would pull items into or out of the menu
+            boolean touchesMenu = event.isShiftClick() || event.getAction() == InventoryAction.COLLECT_TO_CURSOR;
+            if (!menu.isPlayerInventoryEditable() || touchesMenu) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+
+        Menu menu = MenuService.get().get(player);
+        if (menu == null) return;
+
+        int topSize = event.getView().getTopInventory().getSize();
+        for (int rawSlot : event.getRawSlots()) {
+            if (rawSlot < topSize || !menu.isPlayerInventoryEditable()) {
+                event.setCancelled(true);
+                return;
+            }
         }
     }
 
