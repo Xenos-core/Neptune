@@ -229,7 +229,7 @@ public final class Neptune extends JavaPlugin {
         drink.bind(Setting.class).toProvider(new SettingProvider());
         drink.bind(Kit.class).annotatedWith(Text.class).toProvider(new KitProvider());
 
-        drink.register(new KitEditorCommand(), "kiteditor").setDefaultCommandIsHelp(true);
+        drink.register(new KitEditorCommand(), "kiteditor");
         drink.register(new StatsCommand(), "stats").setDefaultCommandIsHelp(true);
         drink.register(new PartyCommand(), "party", "p");
         drink.register(new PartyChatCommand(), "pc", "partychat");
