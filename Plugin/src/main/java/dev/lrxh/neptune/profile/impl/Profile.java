@@ -216,7 +216,7 @@ public class Profile implements IProfile {
             }
             dataDocument.put("customPersistentData", globalCustomPersistentData);
 
-            DatabaseService.get().getDatabase().replace(profile.getPlayerUUID(), dataDocument);
+            DatabaseService.get().getDatabase().replace(profile.getPlayerUUID(), dataDocument).join();
         });
     }
 

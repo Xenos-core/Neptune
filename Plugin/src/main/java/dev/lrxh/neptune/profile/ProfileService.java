@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class ProfileService implements IProfileService {
     private static ProfileService instance;
@@ -54,7 +55,15 @@ public class ProfileService implements IProfileService {
     }
 
     public void saveAll() {
-        profiles.values().forEach(Profile::save);
+        // only called on shutdown, wait for the writes or the server stops before they land
+        CompletableFuture<?>[] saves = profiles.values().stream()
+                .map(Profile::save)
+                .toArray(CompletableFuture[]::new);
+        try {
+            CompletableFuture.allOf(saves).get(10, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            Neptune.get().getLogger().warning("Not every profile finished saving on shutdown: " + e.getMessage());
+        }
     }
 
     public Profile getByUUID(UUID playerUUID) {
