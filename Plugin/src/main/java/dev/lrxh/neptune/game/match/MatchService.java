@@ -274,9 +274,9 @@ public class MatchService implements IMatchService {
             } else {
                 profile.setState(profile.getGameData().getParty() == null ? ProfileState.IN_LOBBY : ProfileState.IN_PARTY);
             }
-
-            m.forEachPlayer(player -> HotbarService.get().giveItems(player));
         });
+
+        m.forEachPlayer(player -> HotbarService.get().giveItems(player));
 
         m.sendEndMessage();
         m.getArena().remove();
