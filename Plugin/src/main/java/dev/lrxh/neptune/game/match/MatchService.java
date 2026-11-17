@@ -160,7 +160,10 @@ public class MatchService implements IMatchService {
             arena.remove();
             return;
         }
-        Kit kit = KitService.get().copyFrom(match.getKit());
+        // use the loaded kit when there is one, a copy isn't the same HashMap key
+        // so the players' stats for this match would end up in a throwaway entry
+        Kit kit = KitService.get().getKitByName(match.getKit().getName());
+        if (kit == null) kit = KitService.get().copyFrom(match.getKit());
         kit.addPlaying(2);
         Participant participantRed = new Participant(redPlayer);
         Participant participantBlue = new Participant(bluePlayer);
