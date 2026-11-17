@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Getter
@@ -27,8 +28,9 @@ public enum EventType {
         public void start(EventService service) {
             AutomatedEvent event = service.getActiveEvent();
             List<Participant> participants = event.getParticipants().stream()
-                    .map(uuid -> new Participant(Bukkit.getPlayer(uuid)))
-                    .filter(p -> p.getPlayer() != null)
+                    .map(Bukkit::getPlayer)
+                    .filter(Objects::nonNull)
+                    .map(Participant::new)
                     .collect(Collectors.toList());
             event.getKit().getRandomArena().thenAccept(arena -> {
                 if (arena == null) {

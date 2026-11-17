@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,6 +50,7 @@ public class AutomatedEvent {
 
     public void nextRound(EventService service) {
         Collections.shuffle(remainingPlayers);
+        int playersThisRound = remainingPlayers.size();
         nextRoundPlayers = new ArrayList<>();
         activeMatches = 0;
 
@@ -62,21 +64,27 @@ public class AutomatedEvent {
             UUID uuidA = remainingPlayers.get(i);
             UUID uuidB = remainingPlayers.get(i + 1);
 
-            Participant pA = new Participant(Bukkit.getPlayer(uuidA));
-            Participant pB = new Participant(Bukkit.getPlayer(uuidB));
+            Player playerA = Bukkit.getPlayer(uuidA);
+            Player playerB = Bukkit.getPlayer(uuidB);
 
-            if (pA.getPlayer() == null || pB.getPlayer() == null) {
+            if (playerA == null || playerB == null) {
                 // skip disconnected players, advance the one who is online
-                if (pA.getPlayer() != null) nextRoundPlayers.add(uuidA);
-                if (pB.getPlayer() != null) nextRoundPlayers.add(uuidB);
+                if (playerA != null) nextRoundPlayers.add(uuidA);
+                if (playerB != null) nextRoundPlayers.add(uuidB);
                 continue;
             }
+
+            Participant pA = new Participant(playerA);
+            Participant pB = new Participant(playerB);
 
             activeMatches++;
             final int round = currentRound;
             kit.getRandomArena().thenAccept(arena -> {
                 if (arena == null) {
+                    // no free arena, let both through instead of knocking them out
                     activeMatches--;
+                    nextRoundPlayers.add(uuidA);
+                    nextRoundPlayers.add(uuidB);
                     return;
                 }
                 Bukkit.getScheduler().runTask(Neptune.get(), () -> {
@@ -87,6 +95,21 @@ public class AutomatedEvent {
                     MatchService.get().startMatch(pA, pB, kit, arena, false, 1);
                 });
             });
+        }
+
+        // nothing got started this round (everyone left or no arenas), move on so the event doesn't hang
+        if (activeMatches <= 0) {
+            if (nextRoundPlayers.size() <= 1) {
+                service.endEvent(nextRoundPlayers.isEmpty() ? null : nextRoundPlayers.get(0));
+            } else if (nextRoundPlayers.size() >= playersThisRound) {
+                // nobody was eliminated, we'd just loop forever without arenas
+                service.stopEvent();
+            } else {
+                remainingPlayers = new ArrayList<>(nextRoundPlayers);
+                currentRound++;
+                nextRound(service);
+            }
+            return;
         }
 
         // Broadcast round start
