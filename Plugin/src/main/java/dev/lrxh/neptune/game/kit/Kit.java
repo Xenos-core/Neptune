@@ -49,6 +49,10 @@ public class Kit implements IKit, ConfigData {
     private List<PotionEffect> potionEffects;
     private double damageMultiplier;
     private int rounds = 1;
+    // which page of the kit editor select menu the kit shows on (0 main kits, 1 subtiers)
+    private int kitEditorPage = 0;
+    // builder kits get the vanilla kit builder (refill + saved kit slots) instead of the layout editor
+    private boolean kitEditorBuilder = false;
 
     public Kit(String name, String displayName, List<ItemStack> items, HashSet<Arena> arenas, ItemStack icon,
                HashMap<KitRule, Boolean> rules, int slot, double health, int kitEditorSlot, int leaderboardSlot,
@@ -153,6 +157,8 @@ public class Kit implements IKit, ConfigData {
         Kit kit = new Kit(name, s.getString("displayName", name), items, arenas, icon, rules,
                 slot, health, kitEditorSlot, leaderboardSlot, potionEffects, damageMultiplier);
         kit.setRounds(rounds);
+        kit.setKitEditorPage(s.getInt("kitEditor-page", 0));
+        kit.setKitEditorBuilder(s.getBoolean("kitEditor-builder", false));
         return kit;
     }
 
@@ -228,6 +234,8 @@ public class Kit implements IKit, ConfigData {
         s.set("leaderboard-slot", leaderboardSlot);
         s.set("damage-multiplier", damageMultiplier);
         s.set("rounds", rounds);
+        s.set("kitEditor-page", kitEditorPage);
+        s.set("kitEditor-builder", kitEditorBuilder);
         s.set("bestOfThree", null);
         for (Map.Entry<KitRule, Boolean> e : rules.entrySet()) {
             s.set(e.getKey().getSaveName(), e.getValue());

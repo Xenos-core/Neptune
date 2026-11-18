@@ -86,6 +86,27 @@ public abstract class Menu {
         return false;
     }
 
+    /**
+     * Lets a menu take over a click completely, return true when it handled it.
+     */
+    public boolean handleClick(Player player, org.bukkit.event.inventory.InventoryClickEvent event) {
+        return false;
+    }
+
+    /**
+     * Lets a menu take over a drag completely, return true when it handled it.
+     */
+    public boolean handleDrag(Player player, org.bukkit.event.inventory.InventoryDragEvent event) {
+        return false;
+    }
+
+    /**
+     * Whether the default menu click sound plays, menus with their own sounds turn it off.
+     */
+    public boolean isClickSound() {
+        return true;
+    }
+
     public Component getTitle(Player player) {
         return Component.empty();
     }

@@ -220,17 +220,17 @@ public class ItemUtils {
             player.getInventory().setHelmet(helmet);
         }
         if (chestplate != null && (chestplate.getItemMeta() instanceof ArmorMeta chestplateMeta)) {
-            if (trimPackage.getHelmetTrim() != null) chestplateMeta.setTrim(trimPackage.getChestplateTrim());
+            if (trimPackage.getChestplateTrim() != null) chestplateMeta.setTrim(trimPackage.getChestplateTrim());
             chestplate.setItemMeta(chestplateMeta);
             player.getInventory().setChestplate(chestplate);
         }
         if (leggings != null && (leggings.getItemMeta() instanceof ArmorMeta leggingsMeta)) {
-            if (trimPackage.getHelmetTrim() != null) leggingsMeta.setTrim(trimPackage.getLeggingsTrim());
+            if (trimPackage.getLeggingsTrim() != null) leggingsMeta.setTrim(trimPackage.getLeggingsTrim());
             leggings.setItemMeta(leggingsMeta);
             player.getInventory().setLeggings(leggings);
         }
         if (boots != null && (boots.getItemMeta() instanceof ArmorMeta bootsMeta)) {
-            if (trimPackage.getHelmetTrim() != null) bootsMeta.setTrim(trimPackage.getBootsTrim());
+            if (trimPackage.getBootsTrim() != null) bootsMeta.setTrim(trimPackage.getBootsTrim());
             boots.setItemMeta(bootsMeta);
             player.getInventory().setBoots(boots);
         }

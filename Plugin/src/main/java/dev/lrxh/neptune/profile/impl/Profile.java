@@ -128,6 +128,14 @@ public class Profile implements IProfile {
                         }
                         profileKitData.setSelectedLoadout(kitDocument.getInteger("selectedLoadout", 0));
 
+                        DataDocument loadoutNames = kitDocument.getDataDocument("loadoutNames");
+                        if (loadoutNames != null) {
+                            for (int i = 0; i < KitData.LOADOUT_SLOTS; i++) {
+                                String loadoutName = loadoutNames.getString(String.valueOf(i + 1), "");
+                                if (!loadoutName.isEmpty()) profileKitData.setLoadoutName(i, loadoutName);
+                            }
+                        }
+
                         DataDocument customPersistentData = kitDocument.getDataDocument("customPersistentData");
                         if (customPersistentData != null) {
                             for (String key : customPersistentData.data.keySet()) {
@@ -200,6 +208,13 @@ public class Profile implements IProfile {
                 }
                 kitStatisticsDocument.put("loadouts", extraLoadouts);
                 kitStatisticsDocument.put("selectedLoadout", entry.getSelectedLoadout());
+
+                DataDocument loadoutNames = new DataDocument();
+                for (int i = 0; i < KitData.LOADOUT_SLOTS; i++) {
+                    String loadoutName = entry.getLoadoutName(i);
+                    loadoutNames.put(String.valueOf(i + 1), loadoutName == null ? "" : loadoutName);
+                }
+                kitStatisticsDocument.put("loadoutNames", loadoutNames);
 
                 entry.updateDivision();
 

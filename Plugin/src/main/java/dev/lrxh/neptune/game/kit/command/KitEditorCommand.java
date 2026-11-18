@@ -6,15 +6,14 @@ import dev.lrxh.neptune.API;
 import dev.lrxh.neptune.configs.impl.MessagesLocale;
 import dev.lrxh.neptune.game.kit.Kit;
 import dev.lrxh.neptune.game.kit.menu.editor.KitEditorMenu;
-import dev.lrxh.neptune.game.kit.menu.editor.button.KitEditorSelectButton;
+import dev.lrxh.neptune.game.kit.menu.editor.KitEditorSelectButton;
+import dev.lrxh.neptune.game.kit.menu.editor.KitEditorSession;
 import dev.lrxh.neptune.profile.data.ProfileState;
 import dev.lrxh.neptune.profile.impl.Profile;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.ClickType;
 
-import java.util.Arrays;
 
 public class KitEditorCommand {
 
@@ -38,7 +37,7 @@ public class KitEditorCommand {
         if (player == null) return;
         Profile profile = API.getProfile(player);
         if (profile.hasState(ProfileState.IN_LOBBY, ProfileState.IN_PARTY)) {
-            new KitEditorSelectButton(0, kit).onClick(ClickType.LEFT, player);
+            KitEditorSelectButton.open(player, kit);
         }
     }
 
@@ -48,19 +47,12 @@ public class KitEditorCommand {
             return;
         Profile profile = API.getProfile(player);
 
-        profile.getGameData().get(kit).setKitLoadout(kit.getItems());
-
         if (profile.hasState(ProfileState.IN_KIT_EDITOR)) {
-            profile.getGameData().get(profile.getGameData().getKitEditor())
-                    .setKitLoadout(Arrays.asList(player.getInventory().getContents()));
-
-            MessagesLocale.KIT_EDITOR_STOP.send(player.getUniqueId(), Placeholder.parsed("kit", kit.getDisplayName()));
-            if (profile.getGameData().getParty() == null) {
-                profile.setState(ProfileState.IN_LOBBY);
-            } else {
-                profile.setState(ProfileState.IN_PARTY);
-            }
+            player.closeInventory();
+            KitEditorSession.finish(player, profile);
         }
+
+        profile.getGameData().get(kit).setKitLoadout(kit.getItems());
 
         MessagesLocale.KIT_EDITOR_RESET.send(player.getUniqueId(), Placeholder.parsed("kit", kit.getDisplayName()));
     }

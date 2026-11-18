@@ -29,9 +29,24 @@ public class KitService extends IService implements IKitService {
         loadAll("kits", kits, Kit::read);
 
         if (kits.isEmpty()) {
-            kits.add(DefaultKits.vanilla());
-            save();
+            addDefaultKits();
         }
+    }
+
+    /**
+     * Adds the default kits that don't exist yet (matched by name), returns how many got added.
+     */
+    public int addDefaultKits() {
+        int added = 0;
+        for (Kit kit : DefaultKits.all()) {
+            if (getKitByName(kit.getName()) != null) continue;
+            kit.setSlot(kits.size() + 1);
+            kit.setLeaderboardSlot(kits.size() + 1);
+            kits.add(kit);
+            added++;
+        }
+        if (added > 0) save();
+        return added;
     }
 
     public boolean add(Kit kit) {

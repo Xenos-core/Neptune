@@ -37,6 +37,8 @@ public class KitData implements IKitData {
     // one loadout per kit editor slot, the selected one is used in matches
     private List<List<ItemStack>> loadouts = emptyLoadouts();
     private int selectedLoadout = 0;
+    // names of the kits players build in the kit builder, null means the slot is empty
+    private String[] loadoutNames = new String[LOADOUT_SLOTS];
     private Division division = DivisionService.get().getDivisionByElo(SettingsLocale.STARTING_ELO.getInt());
     private int elo = SettingsLocale.STARTING_ELO.getInt();
     private HashMap<String, Object> customData = new HashMap<>();
@@ -71,7 +73,18 @@ public class KitData implements IKitData {
         this.selectedLoadout = index;
     }
 
+    public String getLoadoutName(int index) {
+        if (index < 0 || index >= LOADOUT_SLOTS) return null;
+        return loadoutNames[index];
+    }
+
+    public void setLoadoutName(int index, String name) {
+        if (index < 0 || index >= LOADOUT_SLOTS) return;
+        loadoutNames[index] = name;
+    }
+
     public void resetLoadouts(List<ItemStack> defaultItems) {
+        loadoutNames = new String[LOADOUT_SLOTS];
         loadouts = emptyLoadouts();
         loadouts.set(0, new ArrayList<>(defaultItems));
         selectedLoadout = 0;

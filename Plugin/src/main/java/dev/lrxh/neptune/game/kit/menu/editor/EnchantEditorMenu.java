@@ -2,8 +2,6 @@ package dev.lrxh.neptune.game.kit.menu.editor;
 
 import dev.lrxh.neptune.configs.impl.MenusLocale;
 import dev.lrxh.neptune.feature.customkit.enchant.EnchantmentBrowserMenu;
-import dev.lrxh.neptune.game.kit.Kit;
-import dev.lrxh.neptune.utils.ItemBuilder;
 import dev.lrxh.neptune.utils.menu.Button;
 import dev.lrxh.neptune.utils.menu.Filter;
 import dev.lrxh.neptune.utils.menu.Menu;
@@ -12,50 +10,53 @@ import org.bukkit.Registry;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class EnchantEditorMenu extends Menu implements KitEditingMenu {
-    private final Kit kit;
-    private final int loadout;
-    private final EquipmentSlot equipmentSlot;
-    private final RefillCategory category;
+    private final KitEditorSession.Session session;
+    private final int index;
 
-    public EnchantEditorMenu(Kit kit, int loadout, EquipmentSlot equipmentSlot, RefillCategory category) {
+    public EnchantEditorMenu(KitEditorSession.Session session, int index) {
         super(MenusLocale.KIT_EDITOR_ENCHANT_TITLE.getString(), 54, Filter.NONE, true);
-        this.kit = kit;
-        this.loadout = loadout;
-        this.equipmentSlot = equipmentSlot;
-        this.category = category;
+        this.session = session;
+        this.index = index;
+    }
+
+    @Override
+    public boolean isClickSound() {
+        return false;
     }
 
     @Override
     public List<Button> getButtons(Player player) {
         List<Button> buttons = new ArrayList<>();
-        ItemStack item = player.getInventory().getItem(equipmentSlot);
+        for (int slot = 45; slot < 54; slot++) buttons.add(KitEditorMenu.pane(slot, Material.GRAY_STAINED_GLASS_PANE));
 
+        ItemStack item = player.getInventory().getItem(index);
         int slot = 0;
-        for (Enchantment enchantment : Registry.ENCHANTMENT) {
-            if (slot >= 45) break;
-            if (!enchantment.canEnchantItem(item)) continue;
-            buttons.add(new EnchantButton(slot++, enchantment));
+        if (!KitEditorItems.isEmpty(item)) {
+            for (Enchantment enchantment : Registry.ENCHANTMENT) {
+                if (slot >= 45) break;
+                if (!enchantment.canEnchantItem(item)) continue;
+                buttons.add(new EnchantButton(slot++, enchantment));
+            }
         }
 
-        buttons.add(new Button(49) {
+        buttons.add(new Button(53) {
             @Override
             public void onClick(ClickType type, Player player) {
-                new ItemEditorMenu(kit, loadout, equipmentSlot, category).open(player);
+                KitEditorSounds.play(player, KitEditorSounds.BACK);
+                new ItemEditorMenu(session, index).open(player);
             }
 
             @Override
             public ItemStack getItemStack(Player player) {
-                return new ItemBuilder(Material.BARRIER).name(MenusLocale.KIT_EDITOR_BACK_NAME.getString()).build();
+                return KitEditorItems.button(Material.BARRIER, MenusLocale.KIT_EDITOR_BACK_NAME.getString(), List.of());
             }
         });
-
         return buttons;
     }
 
@@ -69,8 +70,10 @@ public class EnchantEditorMenu extends Menu implements KitEditingMenu {
 
         @Override
         public void onClick(ClickType type, Player player) {
-            ItemStack item = player.getInventory().getItem(equipmentSlot);
+            ItemStack item = player.getInventory().getItem(index);
+            if (KitEditorItems.isEmpty(item)) return;
             int level = item.getEnchantmentLevel(enchantment);
+            KitEditorSounds.play(player, KitEditorSounds.CLICK);
 
             if (type.isRightClick() || level >= enchantment.getMaxLevel()) {
                 item.removeEnchantment(enchantment);
@@ -83,23 +86,20 @@ public class EnchantEditorMenu extends Menu implements KitEditingMenu {
                 }
                 item.addUnsafeEnchantment(enchantment, level + 1);
             }
-
-            player.getInventory().setItem(equipmentSlot, item);
+            player.getInventory().setItem(index, item);
         }
 
         @Override
         public ItemStack getItemStack(Player player) {
-            int level = player.getInventory().getItem(equipmentSlot).getEnchantmentLevel(enchantment);
+            ItemStack item = player.getInventory().getItem(index);
+            int level = item == null ? 0 : item.getEnchantmentLevel(enchantment);
             List<String> lore = new ArrayList<>();
             for (String line : MenusLocale.KIT_EDITOR_ENCHANT_LORE.getStringList()) {
                 lore.add(line.replace("<level>", String.valueOf(level))
                         .replace("<max>", String.valueOf(enchantment.getMaxLevel())));
             }
-
-            ItemBuilder builder = new ItemBuilder(Material.ENCHANTED_BOOK)
-                    .name("&d" + EnchantmentBrowserMenu.format(enchantment.getKey().getKey()))
-                    .lore(lore);
-            return builder.build();
+            return KitEditorItems.button(Material.ENCHANTED_BOOK,
+                    "&d" + EnchantmentBrowserMenu.format(enchantment.getKey().getKey()), lore, level > 0);
         }
     }
 }

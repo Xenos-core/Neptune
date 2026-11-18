@@ -20,6 +20,7 @@ public class MenuListener implements Listener {
 
         Menu menu = MenuService.get().get(player);
         if (menu == null) return;
+        if (menu.handleClick(player, event)) return;
 
         if (event.getClickedInventory() != null && event.getClickedInventory().equals(player.getOpenInventory().getTopInventory())) {
             Button button = menu.getButton(event.getSlot());
@@ -30,7 +31,7 @@ public class MenuListener implements Listener {
 
             if (button != null) {
 
-                if (API.getProfile(player).getSettingData().isMenuSound()) {
+                if (menu.isClickSound() && API.getProfile(player).getSettingData().isMenuSound()) {
                     player.playSound(player.getLocation(), SoundsLocale.getSound(SoundsLocale.MENU_BUTTON_CLICK), 1.0f, 1.0f);
                 }
 
@@ -54,6 +55,7 @@ public class MenuListener implements Listener {
 
         Menu menu = MenuService.get().get(player);
         if (menu == null) return;
+        if (menu.handleDrag(player, event)) return;
 
         int topSize = event.getView().getTopInventory().getSize();
         for (int rawSlot : event.getRawSlots()) {

@@ -1,11 +1,9 @@
 package dev.lrxh.neptune.game.kit.menu.editor;
 
+import dev.lrxh.neptune.API;
 import dev.lrxh.neptune.Neptune;
 import dev.lrxh.neptune.configs.impl.MenusLocale;
-import dev.lrxh.neptune.game.kit.Kit;
-import dev.lrxh.neptune.game.kit.menu.editor.button.EquipmentButton;
-import dev.lrxh.neptune.game.kit.menu.editor.button.TrimCustomizerButton;
-import dev.lrxh.neptune.utils.ItemBuilder;
+import dev.lrxh.neptune.profile.impl.Profile;
 import dev.lrxh.neptune.utils.menu.Button;
 import dev.lrxh.neptune.utils.menu.Filter;
 import dev.lrxh.neptune.utils.menu.Menu;
@@ -13,124 +11,196 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
-import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * "Edit Layout" for normal kits. Row 1: trim, armor, offhand, back.
+ * Rows 2-4 are the inventory, row 5 is the separator, row 6 is the hotbar.
+ * Items can only be moved around, nothing gets added or removed.
+ */
 public class KitLayoutMenu extends Menu implements KitEditingMenu {
-    private static final int[] REFILL_SLOTS = {
-            9, 10, 11, 12, 13, 14, 15, 16,
-            18, 19, 20, 21, 22, 23, 24, 25,
-            27, 28, 29, 30, 31, 32, 33, 34,
-            36, 37, 38, 39, 40, 41, 42, 43
-    };
-    private static final int[] CATEGORY_SLOTS = {17, 26, 35};
+    static final int TRIM_SLOT = 0;
+    static final int OFFHAND_SLOT = 6;
+    static final int BACK_SLOT = 8;
+    private static final int[] ARMOR_SLOTS = {2, 3, 4, 5};
+    private static final int[] ARMOR_INDEX = {39, 38, 37, 36};
 
-    private final Kit kit;
-    private final int loadout;
-    private RefillCategory category;
+    private final KitEditorSession.Session session;
 
-    public KitLayoutMenu(Kit kit, int loadout, RefillCategory category) {
-        super(MenusLocale.KIT_EDITOR_EDIT_TITLE.getString().replace("<slot>", String.valueOf(loadout + 1)), 54, Filter.NONE, true);
-        this.kit = kit;
-        this.loadout = loadout;
-        this.category = category;
+    public KitLayoutMenu(KitEditorSession.Session session) {
+        super(MenusLocale.KIT_EDITOR_LAYOUT_TITLE.getString().replace("<kit>", session.getKit().getDisplayName()), 54, Filter.NONE);
+        this.session = session;
+        session.setLayoutMenu(this);
     }
 
     @Override
-    public boolean isPlayerInventoryEditable() {
-        return true;
+    public boolean isClickSound() {
+        return false;
+    }
+
+    /**
+     * Menu slot to player inventory index, -1 for slots that aren't part of the layout.
+     */
+    static int toIndex(int slot) {
+        if (slot == OFFHAND_SLOT) return 40;
+        if (slot >= 9 && slot <= 35) return slot;
+        if (slot >= 45 && slot <= 53) return slot - 45;
+        return -1;
     }
 
     @Override
     public List<Button> getButtons(Player player) {
         List<Button> buttons = new ArrayList<>();
+        ItemStack[] contents = session.getContents();
 
-        List<ItemStack> items = category.getItems();
-        for (int i = 0; i < REFILL_SLOTS.length; i++) {
-            // empty slots still get a button so switching tabs clears the old items
-            buttons.add(new RefillButton(REFILL_SLOTS[i], i < items.size() ? items.get(i) : null));
+        buttons.add(new TrimButton(TRIM_SLOT, () -> {
+            sync(player.getOpenInventory().getTopInventory(), null);
+            new TrimMenu(TrimMenu.Target.of(session.getContents(), () -> new KitLayoutMenu(session).open(player))).open(player);
+        }));
+        buttons.add(KitEditorMenu.pane(1, Material.GRAY_STAINED_GLASS_PANE));
+        buttons.add(KitEditorMenu.pane(7, Material.GRAY_STAINED_GLASS_PANE));
+
+        for (int i = 0; i < ARMOR_SLOTS.length; i++) {
+            ItemStack armor = contents[ARMOR_INDEX[i]];
+            buttons.add(new Button(ARMOR_SLOTS[i]) {
+                @Override
+                public ItemStack getItemStack(Player player) {
+                    return armor == null ? new ItemStack(Material.AIR) : armor.clone();
+                }
+            });
         }
 
-        RefillCategory[] categories = RefillCategory.values();
-        for (int i = 0; i < categories.length && i < CATEGORY_SLOTS.length; i++) {
-            buttons.add(new CategoryButton(CATEGORY_SLOTS[i], categories[i]));
-        }
-
-        buttons.add(new TrimCustomizerButton(45));
-        buttons.add(new EquipmentButton(47, EquipmentSlot.HEAD, kit, loadout, category));
-        buttons.add(new EquipmentButton(48, EquipmentSlot.CHEST, kit, loadout, category));
-        buttons.add(new EquipmentButton(49, EquipmentSlot.LEGS, kit, loadout, category));
-        buttons.add(new EquipmentButton(50, EquipmentSlot.FEET, kit, loadout, category));
-        buttons.add(new EquipmentButton(51, EquipmentSlot.OFF_HAND, kit, loadout, category));
-
-        buttons.add(new Button(53) {
+        buttons.add(new Button(BACK_SLOT) {
             @Override
             public void onClick(ClickType type, Player player) {
-                player.closeInventory();
+                KitEditorSounds.play(player, KitEditorSounds.BACK, KitEditorSounds.SAVE);
+                sync(player.getOpenInventory().getTopInventory(), player.getItemOnCursor());
+                player.setItemOnCursor(null);
+                Profile profile = API.getProfile(player);
+                KitEditorSession.finish(player, profile);
+                new KitEditorMenu(session.getKit().getKitEditorPage()).open(player);
             }
 
             @Override
             public ItemStack getItemStack(Player player) {
-                return new ItemBuilder(Material.BARRIER).name(MenusLocale.KIT_EDITOR_SAVE_NAME.getString())
-                        .lore(MenusLocale.KIT_EDITOR_SAVE_LORE.getStringList()).build();
+                return KitEditorItems.button(Material.BARRIER, MenusLocale.KIT_EDITOR_BACK_NAME.getString(),
+                        MenusLocale.KIT_EDITOR_BACK_SAVE_LORE.getStringList());
             }
         });
+
+        for (int slot = 36; slot <= 44; slot++) {
+            buttons.add(new Button(slot) {
+                @Override
+                public ItemStack getItemStack(Player player) {
+                    return KitEditorItems.button(Material.CYAN_STAINED_GLASS_PANE,
+                            MenusLocale.KIT_EDITOR_LAYOUT_SEPARATOR_NAME.getString(),
+                            MenusLocale.KIT_EDITOR_LAYOUT_SEPARATOR_LORE.getStringList());
+                }
+            });
+        }
+
+        for (int slot = 0; slot < 54; slot++) {
+            int index = toIndex(slot);
+            if (index < 0) continue;
+            ItemStack item = contents[index];
+            boolean offhand = slot == OFFHAND_SLOT;
+            buttons.add(new Button(slot, true) {
+                @Override
+                public ItemStack getItemStack(Player player) {
+                    if (item == null || item.getType().isAir()) {
+                        return offhand ? KitEditorItems.placeholder("Offhand") : new ItemStack(Material.AIR);
+                    }
+                    return item.clone();
+                }
+            });
+        }
 
         return buttons;
     }
 
-    private static class RefillButton extends Button {
-        private final ItemStack item;
-
-        RefillButton(int slot, ItemStack item) {
-            super(slot);
-            this.item = item;
+    @Override
+    public boolean handleClick(Player player, InventoryClickEvent event) {
+        Inventory top = event.getView().getTopInventory();
+        if (event.getClickedInventory() == null || !event.getClickedInventory().equals(top)) {
+            event.setCancelled(true);
+            return true;
         }
 
-        @Override
-        public void onClick(ClickType type, Player player) {
-            if (item == null) return;
-            if (type.isShiftClick()) {
-                player.getInventory().addItem(item.clone());
+        int slot = event.getSlot();
+        ClickType click = event.getClick();
+
+        if (toIndex(slot) < 0) {
+            event.setCancelled(true);
+            Button button = getButton(slot);
+            if (button != null) button.onClick(click, player);
+            return true;
+        }
+
+        // only plain left / right clicks, shift clicks and number keys would pull items out of the layout
+        if (click != ClickType.LEFT && click != ClickType.RIGHT) {
+            event.setCancelled(true);
+            return true;
+        }
+
+        if (slot == OFFHAND_SLOT) {
+            ItemStack cursor = event.getCursor();
+            if (KitEditorItems.isPlaceholder(event.getCurrentItem())) {
+                event.setCancelled(true);
+                if (cursor.getType().isAir()) return true;
+                Bukkit.getScheduler().runTask(Neptune.get(), () -> {
+                    top.setItem(OFFHAND_SLOT, cursor.clone());
+                    player.setItemOnCursor(null);
+                });
+                return true;
+            }
+            Bukkit.getScheduler().runTask(Neptune.get(), () -> {
+                ItemStack now = top.getItem(OFFHAND_SLOT);
+                if (now == null || now.getType().isAir()) top.setItem(OFFHAND_SLOT, KitEditorItems.placeholder("Offhand"));
+            });
+        }
+        return true;
+    }
+
+    @Override
+    public boolean handleDrag(Player player, InventoryDragEvent event) {
+        for (int raw : event.getRawSlots()) {
+            int index = raw < 54 ? toIndex(raw) : -1;
+            if (index < 0 || raw == OFFHAND_SLOT) {
+                event.setCancelled(true);
+                return true;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Reads the menu back into the session, a held item goes into the first free slot.
+     */
+    public void sync(Inventory top, ItemStack cursor) {
+        ItemStack[] contents = session.getContents();
+        for (int slot = 0; slot < 54; slot++) {
+            int index = toIndex(slot);
+            if (index < 0) continue;
+            ItemStack item = top.getItem(slot);
+            contents[index] = KitEditorItems.isEmpty(item) ? null : item.clone();
+        }
+
+        if (cursor == null || cursor.getType().isAir()) return;
+        for (int index = 0; index < 36; index++) {
+            if (contents[index] == null) {
+                contents[index] = cursor.clone();
                 return;
             }
-
-            // clicking the refill while holding something throws it away
-            boolean holding = !player.getItemOnCursor().getType().isAir();
-            ItemStack give = item.clone();
-            if (type.isRightClick()) give.setAmount(1);
-
-            // the click event resets the cursor, so set it a tick later
-            Bukkit.getScheduler().runTask(Neptune.get(), () -> player.setItemOnCursor(holding ? null : give));
-        }
-
-        @Override
-        public ItemStack getItemStack(Player player) {
-            return item == null ? new ItemStack(Material.AIR) : item.clone();
         }
     }
 
-    private class CategoryButton extends Button {
-        private final RefillCategory refill;
-
-        CategoryButton(int slot, RefillCategory refill) {
-            super(slot);
-            this.refill = refill;
-        }
-
-        @Override
-        public void onClick(ClickType type, Player player) {
-            category = refill;
-        }
-
-        @Override
-        public ItemStack getItemStack(Player player) {
-            ItemBuilder builder = new ItemBuilder(refill.getIcon()).name(refill.getName().getString());
-            if (refill == category) builder.addEnchantedGlow();
-            return builder.build();
-        }
+    public Inventory getMenuInventory() {
+        return getInventory();
     }
 }

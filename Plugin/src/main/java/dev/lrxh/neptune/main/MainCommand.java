@@ -87,6 +87,13 @@ public class MainCommand {
         Bukkit.getServer().shutdown();
     }
 
+    @Command(name = "defaultkits", desc = "Adds the default kits that don't exist yet")
+    @Require("neptune.admin")
+    public void defaultKits(@Sender CommandSender sender) {
+        int added = dev.lrxh.neptune.game.kit.KitService.get().addDefaultKits();
+        sender.sendMessage(CC.success("Added " + added + " default kit(s). Add arenas to them with /kit."));
+    }
+
     @Command(name = "resetkitloadout", desc = "")
     @Require("neptune.admin")
     public void resetkitloadout(@Sender Player player, Kit kit) {

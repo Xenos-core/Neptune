@@ -180,6 +180,7 @@ public final class Neptune extends JavaPlugin {
                         new ArenaEditorChatListener(),
                         new KitEditorChatListener(),
                         new KitEditorListener(),
+                        new dev.lrxh.neptune.game.kit.menu.editor.ChatPrompt(),
                         new CustomKitListener(),
                         new PartyChatListener())
                 .forEach(listener -> getServer().getPluginManager().registerEvents(listener, this));
